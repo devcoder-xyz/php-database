@@ -1,0 +1,27 @@
+{
+    "name": "devcoder-xyz/php-database",
+    "description": "a Simple PHP repository pattern in a MVC architecture (Database Access)",
+    "type": "package",
+    "autoload": {
+        "psr-4": {
+            "DevCoder\\DB\\": "src",
+            "Test\\DevCoder\\": "tests"
+        }
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Fad M.R",
+            "email": "fadymichel@devcoder.xyz"
+        }
+    ],
+    "require": {
+        "php": ">=7.3",
+        "ext-pdo": "*",
+        "ext-json": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.4"
+    },
+    "bin": ["bin/database"]
+}
