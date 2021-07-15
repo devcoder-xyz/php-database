@@ -2,10 +2,14 @@
 
 namespace DevCoder\DB\Entity;
 
+use DevCoder\DB\Mapping\MappingInterface;
+
 interface EntityInterface {
+    public function getId(): ?int;
 
     /**
-     * @return int|null
+     * @return array<MappingInterface>
      */
-    public function getId(): ?int;
+    public static function getColumns(): array;
+    public static function getRepository(): string;
 }

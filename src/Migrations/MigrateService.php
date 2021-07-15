@@ -1,12 +1,8 @@
 <?php
 
-namespace Fad\Migrations;
+namespace DevCoder\DB\Migrations;
 
-/**
- * Class MigrateService
- * @package Fad\Migrations
- */
-class MigrateService
+final class MigrateService
 {
     /**
      * @var \PDO
@@ -19,9 +15,9 @@ class MigrateService
     private $params;
 
     /***
-     * @var array
+     * @var array<string>
      */
-    private $success = [];
+    private $successList = [];
 
     /**
      * MigrateService constructor.
@@ -29,6 +25,17 @@ class MigrateService
      */
     public function __construct(array $params = [])
     {
+        if (!array_key_exists('connection', $params)) {
+            throw new \InvalidArgumentException('"connection" is missing');
+        }
+        if (!array_key_exists('migrations_directory', $params)) {
+            throw new \InvalidArgumentException('"migrations_directory" is missing');
+        }
+
+        if (!$params['connection'] instanceof \PDO) {
+            throw new \InvalidArgumentException($params['connection']. ' must be an instance of PDO');
+        }
+
         $this->pdo = $params['connection'];
         $defaultParams = [
             'table_name' => 'migration_versions',
@@ -36,17 +43,14 @@ class MigrateService
         $this->params = $defaultParams + $params;
     }
 
-    /**
-     * @param string|null $model
-     */
-    public function generateMigration(?string $model = null): void
+    public function generateMigration(): string
     {
         $file = date('YmdHis') . '.sql';
-        file_put_contents($this->params['migrations_directory'] . DIRECTORY_SEPARATOR . $file, '');
+        $filename = $this->params['migrations_directory'] . DIRECTORY_SEPARATOR . $file;
+        file_put_contents($filename, '');
+        return $filename;
     }
 
-    /**
-     */
     public function migrate(): void
     {
         $this->createVersion();
@@ -66,22 +70,16 @@ class MigrateService
             $this->pdo->prepare('INSERT INTO ' . $this->params['table_name'] . ' (`version`) VALUES (:version)')
                 ->execute(['version' => $version]);
 
-            $this->success[] = $version;
+            $this->successList[] = $version;
         }
 
     }
 
-    /**
-     * @return void
-     */
     public function createVersion(): void
     {
         $this->pdo->query('CREATE TABLE IF NOT EXISTS ' . $this->params['table_name'] . ' (id INT PRIMARY KEY NOT NULL AUTO_INCREMENT, version varchar(255) NOT NULL)');
     }
 
-    /**
-     * @return array
-     */
     private function getMigrations(): array
     {
         $migrations = [];
@@ -96,11 +94,8 @@ class MigrateService
         return $migrations;
     }
 
-    /**
-     * @return array
-     */
-    public function getSuccess(): array
+    public function getSuccessList(): array
     {
-        return $this->success;
+        return $this->successList;
     }
 }

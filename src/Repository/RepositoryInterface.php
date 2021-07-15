@@ -6,12 +6,19 @@ use DevCoder\DB\Entity\EntityInterface;
 
 interface RepositoryInterface
 {
-    public function find(int $id): ?object;
+    public function findPk(int $pk): ?EntityInterface;
 
+    /**
+     * @param array $arguments
+     * @return array<EntityInterface>
+     */
     public function findBy(array $arguments = []): array;
 
-    public function findOneBy(array $arguments = []): ?object;
+    public function findOneBy(array $arguments = []): ?EntityInterface;
 
+    /**
+     * @return array<EntityInterface>
+     */
     public function findAll(): array;
 
     public function save(EntityInterface $entity): bool;

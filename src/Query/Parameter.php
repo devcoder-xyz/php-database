@@ -2,7 +2,7 @@
 
 namespace DevCoder\DB\Query;
 
-class Parameter
+final class Parameter
 {
     /**
      * The parameter name.
@@ -54,5 +54,23 @@ class Parameter
     public function getType(): int
     {
         return $this->type;
+    }
+
+    public static function create(string $name, $value, int $type = \PDO::PARAM_STR): self
+    {
+        return new self($name, $value, $type);
+    }
+
+    /**
+     * @param array $params
+     * @return array<self>
+     */
+    public static function createCollection(array $params): array
+    {
+        $parameters = [];
+        foreach ($params as $name => $value) {
+            $parameters[] = self::create($name, $value);
+        }
+        return $parameters;
     }
 }

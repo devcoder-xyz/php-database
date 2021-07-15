@@ -2,42 +2,80 @@
 
 namespace DevCoder\DB;
 
+use DevCoder\DB\Helper\EntityHelper;
 use DevCoder\DB\Query\Parameter;
-use Fad\QueryBuilder;
+use DevCoder\DB\Repository\Repository;
+use PDO;
+use PDOStatement;
+use Psr\Container\ContainerInterface;
 
-final class Manager
+class Manager
 {
     /**
+     * 
      * @var \PDO
      */
-    private $pdo;
+    protected $pdo;
 
-    public function __construct(\PDO $pdo)
+    /**
+     * @var ContainerInterface
+     */
+    private $container;
+
+    /**
+     * Manager constructor.
+     * @param ContainerInterface $container
+     * @param PDO $pdo
+     */
+    public function __construct(ContainerInterface $container, PDO $pdo)
     {
-        $pdo->setAttribute(\PDO::ATTR_EMULATE_PREPARES, false);
+        $this->container = $container;
+        $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $this->pdo = $pdo;
     }
 
     /**
-     * @param QueryBuilder $query
+     * @param string $query
      * @param array<Parameter> $params
-     * @return \PDOStatement
+     * @return PDOStatement
      */
-    public function getPDOStatement(QueryBuilder $query, array $params = []) : \PDOStatement
+    public function executeQuery(string $query, array $params = []): PDOStatement
     {
         $db = $this->pdo->prepare($query);
         foreach ($params as $parameter) {
-            $value = $parameter->getValue();
-            $db->bindParam($parameter->getName(), $value, $parameter->getType());
+            $db->bindValue($parameter->getName(), $parameter->getValue(), $parameter->getType());
         }
+        $db->execute();
         return $db;
     }
 
+    public function fetch(string $query, array $params = []): ?array
+    {
+        $db = $this->executeQuery($query, $params);
+        $data = $db->fetch(PDO::FETCH_ASSOC);
+        return $data === false ? null : $data;
+    }
+
+    public function fetchAll(string $query, array $params = []): ?array
+    {
+        $db = $this->executeQuery($query, $params);
+        return $db->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     /**
-     * @return \PDO
+     * @return PDO
      */
-    public function getPdo(): \PDO
+    public function getPdo(): PDO
     {
         return $this->pdo;
+    }
+
+    public function getRepository(string $entityName): Repository
+    {
+        $reflection = EntityHelper::getReflection($entityName);
+        $repositoryClassName = $reflection->getMethod('getRepository')->invoke(null);
+
+        return $this->container->get($repositoryClassName);
     }
 }
